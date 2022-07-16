@@ -1,0 +1,44 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  myb-pge-billing-recorder
+
+  Serverless capabilities for managing aspects of a mining business
+
+Resources:
+  # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+  PgeBillRecFn:
+    Type: AWS::Serverless::Function 
+    Properties:
+      CodeUri: pge_billing_recorder_function
+      Handler: pge_billing_recorder.app.lambda_handler
+      Runtime: python3.9
+      Timeout: 60
+      Environment:
+        Variables:
+          RUN_MODE: production
+          PGE_USERNAME: '{{resolve:ssm:/portlandgeneral/billing/username:1}}'
+          PGE_PASSWORD: '{{resolve:ssm:/portlandgeneral/billing/password:1}}'
+          SHEETS_BILLING_SPREADSHEET_ID: '{{resolve:ssm:/google/sheets/spreadsheets/mine_your_business/pge_billing/id:1}}' 
+          SHEETS_BILLING_SPREADSHEET_SHEET_ID: '{{resolve:ssm:/google/sheets/spreadsheets/mine_your_business/pge_billing/sheet_id:1}}' 
+          SHEETS_BILLING_SPREADSHEET_DATA_START_COLUMN: 0
+          SHEETS_BILLING_SPREADSHEET_DATA_EXCLUSIVE_END_COLUMN: 16
+          SHEETS_CREDENTIALS_TYPE: '{{resolve:ssm:/google/sheets/credentials/mine_your_business/type:1}}' 
+          SHEETS_CREDENTIALS_PROJECT_ID: '{{resolve:ssm:/google/sheets/credentials/mine_your_business/project_id:1}}' 
+          SHEETS_CREDENTIALS_PRIVATE_KEY_ID: '{{resolve:ssm:/google/sheets/credentials/mine_your_business/private_key_id:1}}' 
+          SHEETS_CREDENTIALS_PRIVATE_KEY: '{{resolve:ssm:/google/sheets/credentials/mine_your_business/private_key:1}}' 
+          SHEETS_CREDENTIALS_CLIENT_EMAIL: '{{resolve:ssm:/google/sheets/credentials/mine_your_business/client_email:1}}' 
+          SHEETS_CREDENTIALS_CLIENT_ID: '{{resolve:ssm:/google/sheets/credentials/mine_your_business/client_id:1}}' 
+          # SHEETS_CREDENTIALS_AUTH_URI: https://accounts.google.com/o/oauth2/auth
+          SHEETS_CREDENTILS_TOKEN_URI: https://oauth2.googleapis.com/token
+          SHEETS_CREDENTIALS_AUTH_PROVIDER_X509_CERT_URL: https://www.googleapis.com/oauth2/v1/certs
+          SHEETS_CREDENTIALS_CLIENT_X509_CERT_URL: '{{resolve:ssm:/google/sheets/credentials/mine_your_business/client_x509_cert_url:1}}' 
+
+      Events:
+        CWSchedule:
+          Type: Schedule
+          Properties:
+            Schedule: cron(30 0 * * ? *)
+            Name: PgeBillRecSchedulke
+            Description: execution schedule for recording PGE electricity billing data
+            Enabled: true
